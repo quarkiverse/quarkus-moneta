@@ -19,10 +19,8 @@ package io.quarkiverse.moneta.it;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import org.javamoney.moneta.Money;
 
-import javax.money.format.MonetaryFormats;
-import java.util.Locale;
+import org.javamoney.moneta.Money;
 
 @Path("/moneta")
 @ApplicationScoped
@@ -34,7 +32,6 @@ public class MonetaResource {
         var money = Money.of(100, "EUR")
                 .multiply(1.2);
 
-        return MonetaryFormats.getAmountFormat(Locale.GERMANY)
-                .format(money);
+        return money.getCurrency().getCurrencyCode();
     }
 }

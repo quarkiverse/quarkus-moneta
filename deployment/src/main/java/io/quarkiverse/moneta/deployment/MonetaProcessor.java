@@ -1,11 +1,13 @@
 package io.quarkiverse.moneta.deployment;
 
-import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
-import io.quarkus.deployment.annotations.BuildProducer;
-import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
-import io.quarkus.deployment.builditem.FeatureBuildItem;
-import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import javax.money.convert.ExchangeRateProvider;
+import javax.money.spi.*;
+
 import org.eclipse.transformer.action.ActionContext;
 import org.eclipse.transformer.action.ByteData;
 import org.eclipse.transformer.action.impl.*;
@@ -17,21 +19,19 @@ import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.money.convert.ExchangeRateProvider;
-import javax.money.spi.*;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
+import io.quarkus.deployment.annotations.BuildProducer;
+import io.quarkus.deployment.annotations.BuildStep;
+import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
+import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
 class MonetaProcessor {
 
     private static final String feature = "io.quarkiverse.quarkus-moneta";
     private static final List<String> classesNeedingTransformation = List.of(
-            "org.javamoney.moneta.spi.PriorityServiceComparator",
-            "org.javamoney.moneta.spi.MoneyAmountFactoryProvider",
-            "org.javamoney.moneta.spi.PriorityAwareServiceProvider",
-            "org.javamoney.moneta.internal.OSGIServiceComparator");
+            "org.javamoney.moneta.spi.PriorityServiceComparator", "org.javamoney.moneta.spi.MoneyAmountFactoryProvider",
+            "org.javamoney.moneta.spi.PriorityAwareServiceProvider", "org.javamoney.moneta.internal.OSGIServiceComparator");
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -64,13 +64,9 @@ class MonetaProcessor {
             var transformer = new JakartaTransformer();
 
             classesNeedingTransformation.stream()
-                    .map(s -> new BytecodeTransformerBuildItem.Builder()
-                            .setCacheable(true)
-                            .setContinueOnFailure(false)
-                            .setClassToTransform(s)
-                            .setClassReaderOptions(ClassReader.SKIP_DEBUG)
-                            .setInputTransformer(transformer::transform)
-                            .build())
+                    .map(s -> new BytecodeTransformerBuildItem.Builder().setCacheable(true).setContinueOnFailure(false)
+                            .setClassToTransform(s).setClassReaderOptions(ClassReader.SKIP_DEBUG)
+                            .setInputTransformer(transformer::transform).build())
                     .forEach(producer::produce);
         }
     }
@@ -91,8 +87,7 @@ class MonetaProcessor {
             logger = LoggerFactory.getLogger("JakartaTransformer");
             //N.B. we enable only this single transformation of package renames, not the full set of capabilities of Eclipse Transformer;
             //this might need tailoring if the same idea gets applied to a different context.
-            ctx = new ActionContextImpl(logger,
-                    new SelectionRuleImpl(logger, Collections.emptyMap(), Collections.emptyMap()),
+            ctx = new ActionContextImpl(logger, new SelectionRuleImpl(logger, Collections.emptyMap(), Collections.emptyMap()),
                     new SignatureRuleImpl(logger, renames, null, null, null, null, null, Collections.emptyMap()));
         }
 
