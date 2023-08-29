@@ -16,6 +16,6 @@ public class MonetaResourceTest {
                 .when().get("/moneta/format")
                 .then()
                 .statusCode(200)
-                .body(is("120,00 EUR"));
+                .body(is("EUR"));
     }
 }

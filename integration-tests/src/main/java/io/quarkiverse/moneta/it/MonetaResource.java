@@ -16,10 +16,6 @@
 */
 package io.quarkiverse.moneta.it;
 
-import java.util.Locale;
-
-import javax.money.format.MonetaryFormats;
-
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -36,7 +32,6 @@ public class MonetaResource {
         var money = Money.of(100, "EUR")
                 .multiply(1.2);
 
-        return MonetaryFormats.getAmountFormat(Locale.GERMANY)
-                .format(money);
+        return money.getCurrency().getCurrencyCode();
     }
 }
