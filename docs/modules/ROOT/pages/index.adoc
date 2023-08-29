@@ -1,0 +1,21 @@
+= Quarkus Moneta
+
+include::./includes/attributes.adoc[]
+
+TIP: Describe what the extension does here.
+
+== Installation
+
+If you want to use this extension, you need to add the `io.quarkiverse.moneta:quarkus-moneta` extension first to your build file.
+
+For instance, with Maven, add the following dependency to your POM file:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.moneta</groupId>
+    <artifactId>quarkus-moneta</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
