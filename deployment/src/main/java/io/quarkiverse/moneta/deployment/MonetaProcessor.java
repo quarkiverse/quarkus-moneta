@@ -1,17 +1,13 @@
 package io.quarkiverse.moneta.deployment;
 
-import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
-import io.quarkus.deployment.annotations.BuildProducer;
-import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
-import io.quarkus.deployment.builditem.FeatureBuildItem;
-import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
-import javax.money.convert.ExchangeRateProvider;
-import javax.money.spi.*;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import javax.money.convert.ExchangeRateProvider;
+import javax.money.spi.*;
+
 import org.eclipse.transformer.action.ActionContext;
 import org.eclipse.transformer.action.ByteData;
 import org.eclipse.transformer.action.impl.*;
@@ -22,6 +18,13 @@ import org.javamoney.moneta.spi.loader.LoaderService;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
+import io.quarkus.deployment.annotations.BuildProducer;
+import io.quarkus.deployment.annotations.BuildStep;
+import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
+import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
 class MonetaProcessor {
 

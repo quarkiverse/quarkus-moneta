@@ -16,13 +16,15 @@
 */
 package io.quarkiverse.moneta.it;
 
+import java.util.Locale;
+
+import javax.money.format.MonetaryFormats;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import org.javamoney.moneta.Money;
 
-import javax.money.format.MonetaryFormats;
-import java.util.Locale;
+import org.javamoney.moneta.Money;
 
 @Path("/moneta")
 @ApplicationScoped
