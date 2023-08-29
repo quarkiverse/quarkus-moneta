@@ -13,7 +13,7 @@ public class MonetaResourceTest {
     @Test
     public void testFormat() {
         given()
-                .when().get("/money/format")
+                .when().get("/moneta/format")
                 .then()
                 .statusCode(200)
                 .body(is("120,00 EUR"));
