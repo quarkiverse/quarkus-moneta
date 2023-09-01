@@ -1,5 +1,5 @@
 name: quarkus-moneta
-title: Quarkus Moneta
+title: Moneta
 version: dev
 nav:
   - modules/ROOT/nav.adoc
