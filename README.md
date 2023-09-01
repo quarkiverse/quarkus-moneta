@@ -1,1 +1,41 @@
 # Quarkus Moneta
+
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
+[![Build](https://github.com/quarkiverse/quarkus-moneta/workflows/Build/badge.svg)](https://github.com/quarkiverse/quarkus-moneta/actions?query=workflow%3ABuild)
+[![Maven Central](https://img.shields.io/maven-central/v/io.quarkiverse.moneta/quarkus-moneta-parent.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.quarkiverse.moneta/quarkus-moneta-parent)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+Integrate JavaMoney (JSR 354) into Quarkus for JDK and native builds.
+
+## Usage
+
+Add the following dependency to your build file:
+
+### Maven pom.xml
+
+```xml
+
+<dependency>
+    <groupId>io.quarkiverse.moneta</groupId>
+    <artifactId>quarkus-moneta</artifactId>
+    <version>${latest.version}</version>
+</dependency>
+```
+
+### Gradle build.gradle
+```groovy
+implementation("io.quarkiverse.moneta:quarkus-moneta:$latestVersion")
+```
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification.
+Contributions of any kind welcome!
