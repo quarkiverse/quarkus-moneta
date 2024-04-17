@@ -24,6 +24,7 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
 class MonetaProcessor {
@@ -56,6 +57,15 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(MonetaryFormatsSingletonSpi.class));
         producer.produce(spiBuildItem(MonetaryAmountProducer.class));
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
+    }
+
+    @BuildStep
+    NativeImageResourceBuildItem resources() {
+        return new NativeImageResourceBuildItem(
+                "java-money/defaults/ECB/eurofxref-daily.xml",
+                "java-money/defaults/ECB/eurofxref-hist.xml",
+                "java-money/defaults/ECB/eurofxref-hist-90d.xml",
+                "java-money/defaults/IMF/rms_five.xls");
     }
 
     @BuildStep
