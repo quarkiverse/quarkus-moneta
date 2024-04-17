@@ -8,7 +8,6 @@ import java.util.Map;
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
 
-import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import org.eclipse.transformer.action.ActionContext;
 import org.eclipse.transformer.action.ByteData;
 import org.eclipse.transformer.action.impl.*;
@@ -25,6 +24,7 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
 class MonetaProcessor {
@@ -65,8 +65,7 @@ class MonetaProcessor {
                 "java-money/defaults/ECB/eurofxref-daily.xml",
                 "java-money/defaults/ECB/eurofxref-hist.xml",
                 "java-money/defaults/ECB/eurofxref-hist-90d.xml",
-                "java-money/defaults/IMF/rms_five.xls"
-        );
+                "java-money/defaults/IMF/rms_five.xls");
     }
 
     @BuildStep
