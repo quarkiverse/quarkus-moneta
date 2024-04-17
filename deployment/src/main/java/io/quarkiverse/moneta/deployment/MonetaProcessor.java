@@ -8,6 +8,7 @@ import java.util.Map;
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
 
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import org.eclipse.transformer.action.ActionContext;
 import org.eclipse.transformer.action.ByteData;
 import org.eclipse.transformer.action.impl.*;
@@ -56,6 +57,16 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(MonetaryFormatsSingletonSpi.class));
         producer.produce(spiBuildItem(MonetaryAmountProducer.class));
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
+    }
+
+    @BuildStep
+    NativeImageResourceBuildItem resources() {
+        return new NativeImageResourceBuildItem(
+                "java-money/defaults/ECB/eurofxref-daily.xml",
+                "java-money/defaults/ECB/eurofxref-hist.xml",
+                "java-money/defaults/ECB/eurofxref-hist-90d.xml",
+                "java-money/defaults/IMF/rms_five.xls"
+        );
     }
 
     @BuildStep
