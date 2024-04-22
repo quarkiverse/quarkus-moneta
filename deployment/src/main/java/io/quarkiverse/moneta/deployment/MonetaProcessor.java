@@ -60,7 +60,9 @@ class MonetaProcessor {
                 generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
                 "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml", resourceProducer, generatedResourceProducer);
-        registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv", "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer, generatedResourceProducer);
+        registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
+                "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer,
+                generatedResourceProducer);
     }
 
     private ServiceProviderBuildItem spiBuildItem(Class<?> clazz) {
