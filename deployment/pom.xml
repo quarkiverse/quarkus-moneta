@@ -14,11 +14,6 @@
       <artifactId>quarkus-arc-deployment</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.transformer</groupId>
-      <artifactId>org.eclipse.transformer</artifactId>
-      <version>0.5.0</version>
-    </dependency>
-    <dependency>
       <groupId>io.quarkiverse.moneta</groupId>
       <artifactId>quarkus-moneta</artifactId>
       <version>${project.version}</version>

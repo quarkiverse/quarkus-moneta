@@ -3,30 +3,18 @@ package io.quarkiverse.moneta.deployment;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
 
-import org.eclipse.transformer.action.ActionContext;
-import org.eclipse.transformer.action.ByteData;
-import org.eclipse.transformer.action.impl.*;
-import org.eclipse.transformer.util.FileUtils;
 import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
-import org.objectweb.asm.ClassReader;
-import org.slf4j.LoggerFactory;
 
-import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
@@ -35,10 +23,6 @@ import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 class MonetaProcessor {
 
     private static final String feature = "io.quarkiverse.quarkus-moneta";
-    private static final List<String> classesNeedingTransformation = List.of(
-            "org.javamoney.moneta.spi.PriorityServiceComparator", "org.javamoney.moneta.spi.MoneyAmountFactoryProvider",
-            "org.javamoney.moneta.spi.PriorityAwareServiceProvider", "org.javamoney.moneta.internal.OSGIServiceComparator");
-
     private static final Logger logger = Logger.getLogger("MonetaProcessor");
 
     @BuildStep
@@ -67,15 +51,6 @@ class MonetaProcessor {
     }
 
     @BuildStep
-    NativeImageResourceBuildItem resources() {
-        return new NativeImageResourceBuildItem(
-                "java-money/defaults/ECB/eurofxref-daily.xml",
-                "java-money/defaults/ECB/eurofxref-hist.xml",
-                "java-money/defaults/ECB/eurofxref-hist-90d.xml",
-                "java-money/defaults/IMF/rms_five.xls");
-    }
-
-    @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
             BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
@@ -85,20 +60,9 @@ class MonetaProcessor {
                 generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
                 "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml", resourceProducer, generatedResourceProducer);
-        resourceProducer.produce(new NativeImageResourceBuildItem("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv"));
-    }
-
-    @BuildStep
-    void transformToJakarta(BuildProducer<BytecodeTransformerBuildItem> producer) {
-        if (QuarkusClassLoader.isClassPresentAtRuntime("jakarta.annotation.Priority")) {
-            var transformer = new JakartaTransformer();
-
-            classesNeedingTransformation.stream()
-                    .map(s -> new BytecodeTransformerBuildItem.Builder().setCacheable(true).setContinueOnFailure(false)
-                            .setClassToTransform(s).setClassReaderOptions(ClassReader.SKIP_DEBUG)
-                            .setInputTransformer(transformer::transform).build())
-                    .forEach(producer::produce);
-        }
+        registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
+                "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer,
+                generatedResourceProducer);
     }
 
     private ServiceProviderBuildItem spiBuildItem(Class<?> clazz) {
@@ -121,32 +85,6 @@ class MonetaProcessor {
     private byte[] downloadFile(String url) throws IOException {
         try (var stream = new BufferedInputStream(new URL(url).openStream())) {
             return stream.readAllBytes();
-        }
-    }
-
-    private static class JakartaTransformer {
-
-        private final org.slf4j.Logger logger;
-        private final ActionContext ctx;
-        // We need to prevent the Eclipse Transformer to adjust the "javax" packages.
-        // Thus why we split the strings.
-        private static final Map<String, String> renames = Map.of("javax" + ".annotation", "jakarta.annotation");
-
-        JakartaTransformer() {
-            logger = LoggerFactory.getLogger("JakartaTransformer");
-            //N.B. we enable only this single transformation of package renames, not the full set of capabilities of Eclipse Transformer;
-            //this might need tailoring if the same idea gets applied to a different context.
-            ctx = new ActionContextImpl(logger, new SelectionRuleImpl(logger, Collections.emptyMap(), Collections.emptyMap()),
-                    new SignatureRuleImpl(logger, renames, null, null, null, null, null, Collections.emptyMap()));
-        }
-
-        byte[] transform(final String name, final byte[] bytes) {
-            logger.debug("Jakarta EE compatibility enhancer for Quarkus: transforming " + name);
-            final ClassActionImpl classTransformer = new ClassActionImpl(ctx);
-            final ByteBuffer input = ByteBuffer.wrap(bytes);
-            final ByteData inputData = new ByteDataImpl(name, input, FileUtils.DEFAULT_CHARSET);
-            final ByteData outputData = classTransformer.apply(inputData);
-            return outputData.buffer().array();
         }
     }
 }
