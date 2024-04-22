@@ -13,7 +13,6 @@ import java.util.logging.Logger;
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
 
-import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import org.eclipse.transformer.action.ActionContext;
 import org.eclipse.transformer.action.ByteData;
 import org.eclipse.transformer.action.impl.*;
@@ -22,15 +21,16 @@ import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
 import org.objectweb.asm.ClassReader;
+import org.slf4j.LoggerFactory;
 
 import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
-import org.slf4j.LoggerFactory;
 
 class MonetaProcessor {
 
@@ -76,10 +76,15 @@ class MonetaProcessor {
     }
 
     @BuildStep
-    void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer, BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
-        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml", "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", resourceProducer, generatedResourceProducer);
-        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml", "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml", resourceProducer, generatedResourceProducer);
-        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml", "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml", resourceProducer, generatedResourceProducer);
+    void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
+                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", resourceProducer, generatedResourceProducer);
+        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
+                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml", resourceProducer,
+                generatedResourceProducer);
+        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
+                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml", resourceProducer, generatedResourceProducer);
         resourceProducer.produce(new NativeImageResourceBuildItem("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv"));
     }
 
@@ -100,13 +105,15 @@ class MonetaProcessor {
         return ServiceProviderBuildItem.allProvidersFromClassPath(clazz.getName());
     }
 
-    private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer, BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+    private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         try {
             logger.info("Downloading exchange rates from " + url);
             var data = downloadFile(url);
             generatedResourceProducer.produce(new GeneratedResourceBuildItem(resourcePath, data));
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to download exchange rates from " + url + ". Using java money resource " + resourcePath, e);
+            logger.log(Level.WARNING,
+                    "Failed to download exchange rates from " + url + ". Using java money resource " + resourcePath, e);
             resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
         }
     }
