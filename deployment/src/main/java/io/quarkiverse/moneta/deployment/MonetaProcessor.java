@@ -1,9 +1,14 @@
 package io.quarkiverse.moneta.deployment;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
@@ -16,7 +21,6 @@ import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
 import org.objectweb.asm.ClassReader;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
@@ -24,6 +28,7 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
@@ -33,6 +38,8 @@ class MonetaProcessor {
     private static final List<String> classesNeedingTransformation = List.of(
             "org.javamoney.moneta.spi.PriorityServiceComparator", "org.javamoney.moneta.spi.MoneyAmountFactoryProvider",
             "org.javamoney.moneta.spi.PriorityAwareServiceProvider", "org.javamoney.moneta.internal.OSGIServiceComparator");
+
+    private static final Logger logger = Logger.getLogger("MonetaProcessor");
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -69,6 +76,19 @@ class MonetaProcessor {
     }
 
     @BuildStep
+    void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
+                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", resourceProducer, generatedResourceProducer);
+        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
+                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml", resourceProducer,
+                generatedResourceProducer);
+        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
+                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml", resourceProducer, generatedResourceProducer);
+        resourceProducer.produce(new NativeImageResourceBuildItem("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv"));
+    }
+
+    @BuildStep
     void transformToJakarta(BuildProducer<BytecodeTransformerBuildItem> producer) {
         if (QuarkusClassLoader.isClassPresentAtRuntime("jakarta.annotation.Priority")) {
             var transformer = new JakartaTransformer();
@@ -85,9 +105,28 @@ class MonetaProcessor {
         return ServiceProviderBuildItem.allProvidersFromClassPath(clazz.getName());
     }
 
+    private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+        try {
+            logger.info("Downloading exchange rates from " + url);
+            var data = downloadFile(url);
+            generatedResourceProducer.produce(new GeneratedResourceBuildItem(resourcePath, data));
+        } catch (Exception e) {
+            logger.log(Level.WARNING,
+                    "Failed to download exchange rates from " + url + ". Using java money resource " + resourcePath, e);
+            resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
+        }
+    }
+
+    private byte[] downloadFile(String url) throws IOException {
+        try (var stream = new BufferedInputStream(new URL(url).openStream())) {
+            return stream.readAllBytes();
+        }
+    }
+
     private static class JakartaTransformer {
 
-        private final Logger logger;
+        private final org.slf4j.Logger logger;
         private final ActionContext ctx;
         // We need to prevent the Eclipse Transformer to adjust the "javax" packages.
         // Thus why we split the strings.
