@@ -78,8 +78,9 @@ class MonetaProcessor {
         } catch (Exception e) {
             logger.log(Level.WARNING,
                     "Failed to download exchange rates from " + url + ". Using java money resource " + resourcePath, e);
-            resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
         }
+
+        resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
     }
 
     private byte[] downloadFile(String url) throws IOException {
