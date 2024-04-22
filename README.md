@@ -29,6 +29,15 @@ Add the following dependency to your build file:
 implementation("io.quarkiverse.moneta:quarkus-moneta:$latestVersion")
 ```
 
+## Compatibility
+
+Quarkus APIstax provides multiple different version streams.
+
+| Quarkus     | Quarkus Moneta |
+|-------------|----------------|
+| 3.8.x (LTS) | 1.x            |
+| 3.9.x       | 2.x            |
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
