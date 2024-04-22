@@ -67,15 +67,6 @@ class MonetaProcessor {
     }
 
     @BuildStep
-    NativeImageResourceBuildItem resources() {
-        return new NativeImageResourceBuildItem(
-                "java-money/defaults/ECB/eurofxref-daily.xml",
-                "java-money/defaults/ECB/eurofxref-hist.xml",
-                "java-money/defaults/ECB/eurofxref-hist-90d.xml",
-                "java-money/defaults/IMF/rms_five.xls");
-    }
-
-    @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
             BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
