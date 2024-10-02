@@ -11,13 +11,13 @@ import javax.money.MonetaryAmount;
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
 
-import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
 import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
 
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
+import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
@@ -57,8 +57,7 @@ class MonetaProcessor {
     AdditionalIndexedClassesBuildItem index() {
         return new AdditionalIndexedClassesBuildItem(
                 MonetaryAmount.class.getName(),
-                CurrencyUnit.class.getName()
-        );
+                CurrencyUnit.class.getName());
     }
 
     @BuildStep
