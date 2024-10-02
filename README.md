@@ -33,10 +33,10 @@ implementation("io.quarkiverse.moneta:quarkus-moneta:$latestVersion")
 
 Quarkus APIstax provides multiple different version streams.
 
-| Quarkus     | Quarkus Moneta |
-|-------------|----------------|
-| 3.8.x (LTS) | 1.x            |
-| 3.10.x      | 2.x            |
+| Quarkus      | Quarkus Moneta |
+|--------------|----------------|
+| 3.8.x (LTS)  | 1.x            |
+| 3.15.x (LTS) | 2.x            |
 
 ## Contributors ✨
 
