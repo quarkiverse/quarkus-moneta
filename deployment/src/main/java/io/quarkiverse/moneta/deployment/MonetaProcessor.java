@@ -6,9 +6,12 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.money.CurrencyUnit;
+import javax.money.MonetaryAmount;
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
 
+import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
 import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
@@ -48,6 +51,14 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(MonetaryFormatsSingletonSpi.class));
         producer.produce(spiBuildItem(MonetaryAmountProducer.class));
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
+    }
+
+    @BuildStep
+    AdditionalIndexedClassesBuildItem index() {
+        return new AdditionalIndexedClassesBuildItem(
+                MonetaryAmount.class.getName(),
+                CurrencyUnit.class.getName()
+        );
     }
 
     @BuildStep
