@@ -6,8 +6,6 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.money.CurrencyUnit;
-import javax.money.MonetaryAmount;
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.*;
 
@@ -17,9 +15,9 @@ import org.javamoney.moneta.spi.loader.LoaderService;
 
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
+import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
@@ -54,10 +52,12 @@ class MonetaProcessor {
     }
 
     @BuildStep
-    AdditionalIndexedClassesBuildItem index() {
-        return new AdditionalIndexedClassesBuildItem(
-                MonetaryAmount.class.getName(),
-                CurrencyUnit.class.getName());
+    void indexDependencies(BuildProducer<IndexDependencyBuildItem> producer) {
+        producer.produce(new IndexDependencyBuildItem("javax.money", "money-api"));
+        producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-core"));
+        producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-convert"));
+        producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-ecb"));
+        producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-imf"));
     }
 
     @BuildStep
