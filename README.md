@@ -1,4 +1,10 @@
+<div align="center">
+
+<img src="https://github.com/quarkiverse/.github/blob/main/assets/images/quarkus.svg" width="67" height="70" ><img src="https://github.com/quarkiverse/.github/blob/main/assets/images/plus-sign.svg" height="70" ><img src="https://github.com/quarkiverse/quarkus-moneta/blob/main/docs/modules/ROOT/assets/images/moneta.svg" height="70" >
+
 # Quarkus Moneta
+</div>
+<br>
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
@@ -7,7 +13,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.quarkiverse.moneta/quarkus-moneta-parent.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.quarkiverse.moneta/quarkus-moneta-parent)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Integrate JavaMoney (JSR 354) into Quarkus for JDK and native builds.
+Integrate [JavaMoney (JSR 354)](https://javamoney.github.io/) into Quarkus for JDK and native builds.
 
 ## Usage
 
@@ -31,7 +37,7 @@ implementation("io.quarkiverse.moneta:quarkus-moneta:$latestVersion")
 
 ## Compatibility
 
-Quarkus APIstax provides multiple different version streams.
+Quarkus Moneta provides multiple different version streams.
 
 | Quarkus      | Quarkus Moneta |
 |--------------|----------------|
