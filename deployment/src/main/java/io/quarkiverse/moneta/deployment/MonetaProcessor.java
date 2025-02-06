@@ -7,12 +7,23 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.money.convert.ExchangeRateProvider;
-import javax.money.spi.*;
+import javax.money.spi.CurrencyProviderSpi;
+import javax.money.spi.MonetaryAmountFactoryProviderSpi;
+import javax.money.spi.MonetaryAmountFormatProviderSpi;
+import javax.money.spi.MonetaryAmountsSingletonQuerySpi;
+import javax.money.spi.MonetaryAmountsSingletonSpi;
+import javax.money.spi.MonetaryConversionsSingletonSpi;
+import javax.money.spi.MonetaryCurrenciesSingletonSpi;
+import javax.money.spi.MonetaryFormatsSingletonSpi;
+import javax.money.spi.MonetaryRoundingsSingletonSpi;
+import javax.money.spi.RoundingProviderSpi;
+import javax.money.spi.ServiceProvider;
 
 import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
 
+import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
@@ -20,6 +31,7 @@ import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
+import io.quarkus.deployment.pkg.builditem.UberJarMergedResourceBuildItem;
 
 class MonetaProcessor {
 
@@ -73,6 +85,11 @@ class MonetaProcessor {
         registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
                 "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer,
                 generatedResourceProducer);
+    }
+
+    @BuildStep(onlyIf = IsNormal.class)
+    void uberJarFiles(BuildProducer<UberJarMergedResourceBuildItem> uberJarMergedProducer) {
+        uberJarMergedProducer.produce(new UberJarMergedResourceBuildItem("javamoney.properties"));
     }
 
     private ServiceProviderBuildItem spiBuildItem(Class<?> clazz) {
