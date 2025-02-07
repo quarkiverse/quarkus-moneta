@@ -1,9 +1,13 @@
 name: Moneta
-#description: Do something useful.
 metadata:
-#  keywords:
-#    - moneta
-#  guide: https://quarkiverse.github.io/quarkiverse-docs/moneta/dev/ # To create and publish this guide, see https://github.com/quarkiverse/quarkiverse/wiki#documenting-your-extension
-#  categories:
-#    - "miscellaneous"
-#  status: "preview"
+  short-name: "moneta"
+  keywords:
+    - "currency"
+    - "money"
+    - "moneta"
+  categories:
+    - "miscellaneous"
+  config:
+    - "quarkus.moneta."
+  status: "stable"
+  icon-url: "https://github.com/quarkiverse/quarkus-moneta/blob/main/docs/modules/ROOT/assets/images/moneta.svg"
