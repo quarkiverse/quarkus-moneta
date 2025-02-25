@@ -101,6 +101,15 @@ class MonetaProcessor {
                 generatedResourceProducer);
     }
 
+    @BuildStep
+    void overrideServices(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+        var resourcePath = "META-INF/services/" + LoaderService.class.getName();
+        generatedResourceProducer
+                .produce(new GeneratedResourceBuildItem(resourcePath, JvmHttpLoaderService.class.getName().getBytes()));
+        resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
+    }
+
     @BuildStep(onlyIf = IsNormal.class)
     void uberJarFiles(BuildProducer<UberJarMergedResourceBuildItem> uberJarMergedProducer) {
         uberJarMergedProducer.produce(new UberJarMergedResourceBuildItem("javamoney.properties"));
