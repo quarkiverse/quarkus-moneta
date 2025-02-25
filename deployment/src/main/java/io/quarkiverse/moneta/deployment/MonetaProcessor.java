@@ -88,7 +88,7 @@ class MonetaProcessor {
 
     @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+                               BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
                 "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", resourceProducer, generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
@@ -99,6 +99,14 @@ class MonetaProcessor {
         registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
                 "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer,
                 generatedResourceProducer);
+    }
+
+    @BuildStep
+    void overrideServices(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+                          BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+        var resourcePath = "META-INF/services/" + LoaderService.class.getName();
+        generatedResourceProducer.produce(new GeneratedResourceBuildItem(resourcePath, JvmHttpLoaderService.class.getName().getBytes()));
+        resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
     }
 
     @BuildStep(onlyIf = IsNormal.class)
@@ -120,7 +128,7 @@ class MonetaProcessor {
     }
 
     private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+                                  BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         try {
             logger.info("Downloading exchange rates from " + url);
             var data = downloadFile(url);
