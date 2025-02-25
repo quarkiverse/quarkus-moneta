@@ -1,10 +1,10 @@
 package io.quarkiverse.moneta.deployment;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.net.URL;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.CurrencyProviderSpi;
@@ -23,6 +23,9 @@ import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
 
+import io.quarkiverse.moneta.CertificateSupplier;
+import io.quarkiverse.moneta.Constants;
+import io.quarkiverse.moneta.loader.JvmHttpLoaderService;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -32,6 +35,11 @@ import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 import io.quarkus.deployment.pkg.builditem.UberJarMergedResourceBuildItem;
+import io.quarkus.tls.TlsCertificateBuildItem;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.RequestOptions;
+import io.vertx.mutiny.core.Vertx;
 
 class MonetaProcessor {
 
@@ -54,13 +62,14 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(MonetaryCurrenciesSingletonSpi.class));
         producer.produce(spiBuildItem(RoundingProviderSpi.class));
         producer.produce(spiBuildItem(ServiceProvider.class));
-        producer.produce(spiBuildItem(LoaderService.class));
         producer.produce(spiBuildItem(MonetaryConfigProvider.class));
         producer.produce(spiBuildItem(MonetaryConversionsSingletonSpi.class));
         producer.produce(spiBuildItem(ExchangeRateProvider.class));
         producer.produce(spiBuildItem(MonetaryFormatsSingletonSpi.class));
         producer.produce(spiBuildItem(MonetaryAmountProducer.class));
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
+
+        producer.produce(spiBuildItem(LoaderService.class, JvmHttpLoaderService.class));
     }
 
     @BuildStep
@@ -70,6 +79,11 @@ class MonetaProcessor {
         producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-convert"));
         producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-ecb"));
         producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-imf"));
+    }
+
+    @BuildStep
+    TlsCertificateBuildItem certificates() {
+        return new TlsCertificateBuildItem(Constants.TLS_CONFIGURATION, new CertificateSupplier());
     }
 
     @BuildStep
@@ -96,6 +110,15 @@ class MonetaProcessor {
         return ServiceProviderBuildItem.allProvidersFromClassPath(clazz.getName());
     }
 
+    @SafeVarargs
+    private <C, I extends C> ServiceProviderBuildItem spiBuildItem(Class<C> serviceInterface, Class<I>... providers) {
+        var p = Arrays.stream(providers)
+                .map(Class::getName)
+                .collect(Collectors.toUnmodifiableList());
+
+        return new ServiceProviderBuildItem(serviceInterface.getName(), p);
+    }
+
     private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer,
             BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         try {
@@ -110,9 +133,32 @@ class MonetaProcessor {
         resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
     }
 
-    private byte[] downloadFile(String url) throws IOException {
-        try (var stream = new BufferedInputStream(new URL(url).openStream())) {
-            return stream.readAllBytes();
-        }
+    private byte[] downloadFile(String url) {
+        var options = new HttpClientOptions()
+                .setVerifyHost(false)
+                .setTrustAll(true)
+                .setSsl(true);
+
+        var client = Vertx.vertx()
+                .createHttpClient(options);
+
+        var requestOptions = new RequestOptions()
+                .setMethod(HttpMethod.GET)
+                .setTimeout(5000)
+                .setConnectTimeout(5000)
+                .setIdleTimeout(5000)
+                .setAbsoluteURI(url);
+
+        var buffer = client.request(requestOptions)
+                .await()
+                .atMost(Duration.ofSeconds(5))
+                .send()
+                .await()
+                .atMost(Duration.ofSeconds(5))
+                .body()
+                .await()
+                .atMost(Duration.ofSeconds(5));
+
+        return buffer.getBytes();
     }
 }
