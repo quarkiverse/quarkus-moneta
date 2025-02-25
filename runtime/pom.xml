@@ -14,6 +14,10 @@
       <artifactId>quarkus-arc</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-tls-registry</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.javamoney</groupId>
       <artifactId>moneta</artifactId>
       <version>1.4.4</version>
