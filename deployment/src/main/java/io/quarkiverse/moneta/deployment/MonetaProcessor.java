@@ -80,14 +80,14 @@ class MonetaProcessor {
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
                                BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
-                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", resourceProducer, generatedResourceProducer);
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml", resourceProducer, generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
-                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml", resourceProducer,
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml", resourceProducer,
                 generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
-                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml", resourceProducer, generatedResourceProducer);
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml", resourceProducer, generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
-                "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer,
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv", resourceProducer,
                 generatedResourceProducer);
     }
 
