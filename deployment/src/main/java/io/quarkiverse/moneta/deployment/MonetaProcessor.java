@@ -1,6 +1,8 @@
 package io.quarkiverse.moneta.deployment;
 
-import java.time.Duration;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,10 +24,8 @@ import javax.money.spi.ServiceProvider;
 import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
+import org.javamoney.moneta.spi.loader.okhttp.OkHttpLoaderService;
 
-import io.quarkiverse.moneta.CertificateSupplier;
-import io.quarkiverse.moneta.Constants;
-import io.quarkiverse.moneta.loader.JvmHttpLoaderService;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -35,11 +35,6 @@ import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 import io.quarkus.deployment.pkg.builditem.UberJarMergedResourceBuildItem;
-import io.quarkus.tls.TlsCertificateBuildItem;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.RequestOptions;
-import io.vertx.mutiny.core.Vertx;
 
 class MonetaProcessor {
 
@@ -69,7 +64,7 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(MonetaryAmountProducer.class));
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
 
-        producer.produce(spiBuildItem(LoaderService.class, JvmHttpLoaderService.class));
+        producer.produce(spiBuildItem(LoaderService.class, OkHttpLoaderService.class));
     }
 
     @BuildStep
@@ -82,37 +77,56 @@ class MonetaProcessor {
     }
 
     @BuildStep
-    TlsCertificateBuildItem certificates() {
-        return new TlsCertificateBuildItem(Constants.TLS_CONFIGURATION, new CertificateSupplier());
-    }
-
-    @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
             BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
-                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", resourceProducer, generatedResourceProducer);
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml",
+                resourceProducer, generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
-                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml", resourceProducer,
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml",
+                resourceProducer,
                 generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
-                "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml", resourceProducer, generatedResourceProducer);
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml",
+                resourceProducer, generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
-                "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer,
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv",
+                resourceProducer,
                 generatedResourceProducer);
-    }
-
-    @BuildStep
-    void overrideServices(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
-        var resourcePath = "META-INF/services/" + LoaderService.class.getName();
-        generatedResourceProducer
-                .produce(new GeneratedResourceBuildItem(resourcePath, JvmHttpLoaderService.class.getName().getBytes()));
-        resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
     }
 
     @BuildStep(onlyIf = IsNormal.class)
     void uberJarFiles(BuildProducer<UberJarMergedResourceBuildItem> uberJarMergedProducer) {
         uberJarMergedProducer.produce(new UberJarMergedResourceBuildItem("javamoney.properties"));
+    }
+
+    @BuildStep
+    void javaMoneyProperties(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+        var properties = "load.ECBHistoricRateProvider.type=SCHEDULED\n" +
+                "load.ECBHistoricRateProvider.period=24:00\n" +
+                "load.ECBHistoricRateProvider.delay=01:00\n" +
+                "load.ECBHistoricRateProvider.at=07:00\n" +
+                "load.ECBHistoricRateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml\n" +
+                "load.ECBHistoricRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml\n"
+                +
+                "load.ECBHistoric90RateProvider.type=SCHEDULED\n" +
+                "load.ECBHistoric90RateProvider.period=03:00\n" +
+                "load.ECBHistoric90RateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml\n" +
+                "load.ECBHistoric90RateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml\n"
+                +
+                "load.ECBCurrentRateProvider.type=SCHEDULED\n" +
+                "load.ECBCurrentRateProvider.period=03:00\n" +
+                "load.ECBCurrentRateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml\n" +
+                "load.ECBCurrentRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml\n"
+                +
+                "load.IMFRateProvider.type=SCHEDULED\n" +
+                "load.IMFRateProvider.period=06:00\n" +
+                "load.IMFRateProvider.resource=org/javamoney/moneta/convert/imf/defaults/rms_five.tsv\n" +
+                "load.IMFRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv";
+
+        generatedResourceProducer.produce(new GeneratedResourceBuildItem("javamoney.properties", properties.getBytes()));
+        resourceProducer.produce(new NativeImageResourceBuildItem("javamoney.properties"));
     }
 
     private ServiceProviderBuildItem spiBuildItem(Class<?> clazz) {
@@ -142,32 +156,9 @@ class MonetaProcessor {
         resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
     }
 
-    private byte[] downloadFile(String url) {
-        var options = new HttpClientOptions()
-                .setVerifyHost(false)
-                .setTrustAll(true)
-                .setSsl(true);
-
-        var client = Vertx.vertx()
-                .createHttpClient(options);
-
-        var requestOptions = new RequestOptions()
-                .setMethod(HttpMethod.GET)
-                .setTimeout(5000)
-                .setConnectTimeout(5000)
-                .setIdleTimeout(5000)
-                .setAbsoluteURI(url);
-
-        var buffer = client.request(requestOptions)
-                .await()
-                .atMost(Duration.ofSeconds(5))
-                .send()
-                .await()
-                .atMost(Duration.ofSeconds(5))
-                .body()
-                .await()
-                .atMost(Duration.ofSeconds(5));
-
-        return buffer.getBytes();
+    private byte[] downloadFile(String url) throws IOException {
+        try (var stream = new BufferedInputStream(new URL(url).openStream())) {
+            return stream.readAllBytes();
+        }
     }
 }
