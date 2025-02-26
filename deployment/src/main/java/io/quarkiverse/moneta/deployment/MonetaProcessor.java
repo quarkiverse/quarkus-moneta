@@ -100,6 +100,32 @@ class MonetaProcessor {
         uberJarMergedProducer.produce(new UberJarMergedResourceBuildItem("javamoney.properties"));
     }
 
+    @BuildStep
+    void javaMoneyProperties(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
+                           BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+        var properties = "load.ECBHistoricRateProvider.type=SCHEDULED\n" +
+                "load.ECBHistoricRateProvider.period=24:00\n" +
+                "load.ECBHistoricRateProvider.delay=01:00\n" +
+                "load.ECBHistoricRateProvider.at=07:00\n" +
+                "load.ECBHistoricRateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml\n" +
+                "load.ECBHistoricRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml\n" +
+                "load.ECBHistoric90RateProvider.type=SCHEDULED\n" +
+                "load.ECBHistoric90RateProvider.period=03:00\n" +
+                "load.ECBHistoric90RateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml\n" +
+                "load.ECBHistoric90RateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml\n" +
+                "load.ECBCurrentRateProvider.type=SCHEDULED\n" +
+                "load.ECBCurrentRateProvider.period=03:00\n" +
+                "load.ECBCurrentRateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml\n" +
+                "load.ECBCurrentRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml\n" +
+                "load.IMFRateProvider.type=SCHEDULED\n" +
+                "load.IMFRateProvider.period=06:00\n" +
+                "load.IMFRateProvider.resource=org/javamoney/moneta/convert/imf/defaults/rms_five.tsv\n" +
+                "load.IMFRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv";
+
+        generatedResourceProducer.produce(new GeneratedResourceBuildItem("javamoney.properties", properties.getBytes()));
+        resourceProducer.produce(new NativeImageResourceBuildItem("javamoney.properties"));
+    }
+
     private ServiceProviderBuildItem spiBuildItem(Class<?> clazz) {
         return ServiceProviderBuildItem.allProvidersFromClassPath(clazz.getName());
     }
