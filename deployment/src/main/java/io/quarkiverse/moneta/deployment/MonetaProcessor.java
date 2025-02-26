@@ -1,6 +1,8 @@
 package io.quarkiverse.moneta.deployment;
 
-import java.time.Duration;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,9 +25,6 @@ import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
 
-import io.quarkiverse.moneta.CertificateSupplier;
-import io.quarkiverse.moneta.Constants;
-import io.quarkiverse.moneta.loader.JvmHttpLoaderService;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -35,11 +34,7 @@ import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 import io.quarkus.deployment.pkg.builditem.UberJarMergedResourceBuildItem;
-import io.quarkus.tls.TlsCertificateBuildItem;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.RequestOptions;
-import io.vertx.mutiny.core.Vertx;
+import org.javamoney.moneta.spi.loader.okhttp.OkHttpLoaderService;
 
 class MonetaProcessor {
 
@@ -69,7 +64,7 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(MonetaryAmountProducer.class));
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
 
-        producer.produce(spiBuildItem(LoaderService.class, JvmHttpLoaderService.class));
+        producer.produce(spiBuildItem(LoaderService.class, OkHttpLoaderService.class));
     }
 
     @BuildStep
@@ -82,13 +77,8 @@ class MonetaProcessor {
     }
 
     @BuildStep
-    TlsCertificateBuildItem certificates() {
-        return new TlsCertificateBuildItem(Constants.TLS_CONFIGURATION, new CertificateSupplier());
-    }
-
-    @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+                               BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
                 "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", resourceProducer, generatedResourceProducer);
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
@@ -99,15 +89,6 @@ class MonetaProcessor {
         registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
                 "https://www.imf.org/external/np/fin/data/rms_five.aspx?tsvflag=Y", resourceProducer,
                 generatedResourceProducer);
-    }
-
-    @BuildStep
-    void overrideServices(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
-        var resourcePath = "META-INF/services/" + LoaderService.class.getName();
-        generatedResourceProducer
-                .produce(new GeneratedResourceBuildItem(resourcePath, JvmHttpLoaderService.class.getName().getBytes()));
-        resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
     }
 
     @BuildStep(onlyIf = IsNormal.class)
@@ -129,7 +110,7 @@ class MonetaProcessor {
     }
 
     private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+                                  BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         try {
             logger.info("Downloading exchange rates from " + url);
             var data = downloadFile(url);
@@ -142,32 +123,9 @@ class MonetaProcessor {
         resourceProducer.produce(new NativeImageResourceBuildItem(resourcePath));
     }
 
-    private byte[] downloadFile(String url) {
-        var options = new HttpClientOptions()
-                .setVerifyHost(false)
-                .setTrustAll(true)
-                .setSsl(true);
-
-        var client = Vertx.vertx()
-                .createHttpClient(options);
-
-        var requestOptions = new RequestOptions()
-                .setMethod(HttpMethod.GET)
-                .setTimeout(5000)
-                .setConnectTimeout(5000)
-                .setIdleTimeout(5000)
-                .setAbsoluteURI(url);
-
-        var buffer = client.request(requestOptions)
-                .await()
-                .atMost(Duration.ofSeconds(5))
-                .send()
-                .await()
-                .atMost(Duration.ofSeconds(5))
-                .body()
-                .await()
-                .atMost(Duration.ofSeconds(5));
-
-        return buffer.getBytes();
+    private byte[] downloadFile(String url) throws IOException {
+        try (var stream = new BufferedInputStream(new URL(url).openStream())) {
+            return stream.readAllBytes();
+        }
     }
 }
