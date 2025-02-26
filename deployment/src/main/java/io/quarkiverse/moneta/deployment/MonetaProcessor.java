@@ -24,6 +24,7 @@ import javax.money.spi.ServiceProvider;
 import org.javamoney.moneta.spi.MonetaryAmountProducer;
 import org.javamoney.moneta.spi.MonetaryConfigProvider;
 import org.javamoney.moneta.spi.loader.LoaderService;
+import org.javamoney.moneta.spi.loader.okhttp.OkHttpLoaderService;
 
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -34,7 +35,6 @@ import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 import io.quarkus.deployment.pkg.builditem.UberJarMergedResourceBuildItem;
-import org.javamoney.moneta.spi.loader.okhttp.OkHttpLoaderService;
 
 class MonetaProcessor {
 
@@ -78,7 +78,7 @@ class MonetaProcessor {
 
     @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-                               BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
                 "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml",
                 resourceProducer, generatedResourceProducer);
@@ -102,21 +102,24 @@ class MonetaProcessor {
 
     @BuildStep
     void javaMoneyProperties(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-                           BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         var properties = "load.ECBHistoricRateProvider.type=SCHEDULED\n" +
                 "load.ECBHistoricRateProvider.period=24:00\n" +
                 "load.ECBHistoricRateProvider.delay=01:00\n" +
                 "load.ECBHistoricRateProvider.at=07:00\n" +
                 "load.ECBHistoricRateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml\n" +
-                "load.ECBHistoricRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml\n" +
+                "load.ECBHistoricRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml\n"
+                +
                 "load.ECBHistoric90RateProvider.type=SCHEDULED\n" +
                 "load.ECBHistoric90RateProvider.period=03:00\n" +
                 "load.ECBHistoric90RateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml\n" +
-                "load.ECBHistoric90RateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml\n" +
+                "load.ECBHistoric90RateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml\n"
+                +
                 "load.ECBCurrentRateProvider.type=SCHEDULED\n" +
                 "load.ECBCurrentRateProvider.period=03:00\n" +
                 "load.ECBCurrentRateProvider.resource=org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml\n" +
-                "load.ECBCurrentRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml\n" +
+                "load.ECBCurrentRateProvider.urls=https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml\n"
+                +
                 "load.IMFRateProvider.type=SCHEDULED\n" +
                 "load.IMFRateProvider.period=06:00\n" +
                 "load.IMFRateProvider.resource=org/javamoney/moneta/convert/imf/defaults/rms_five.tsv\n" +
@@ -140,7 +143,7 @@ class MonetaProcessor {
     }
 
     private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-                                  BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         try {
             logger.info("Downloading exchange rates from " + url);
             var data = downloadFile(url);
