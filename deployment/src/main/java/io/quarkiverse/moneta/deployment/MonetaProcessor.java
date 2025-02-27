@@ -33,6 +33,7 @@ import io.quarkiverse.moneta.convert.ECBHistoric90RateProvider;
 import io.quarkiverse.moneta.convert.ECBHistoricRateProvider;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
+import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
@@ -47,6 +48,11 @@ class MonetaProcessor {
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(feature);
+    }
+
+    @BuildStep
+    public ExtensionSslNativeSupportBuildItem build() {
+        return new ExtensionSslNativeSupportBuildItem(feature);
     }
 
     @BuildStep
