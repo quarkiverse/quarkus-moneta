@@ -3,8 +3,10 @@ package io.quarkiverse.moneta.deployment;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.money.convert.ExchangeRateProvider;
 import javax.money.spi.CurrencyProviderSpi;
@@ -19,10 +21,16 @@ import javax.money.spi.MonetaryRoundingsSingletonSpi;
 import javax.money.spi.RoundingProviderSpi;
 import javax.money.spi.ServiceProvider;
 
-import org.javamoney.moneta.spi.MonetaryAmountProducer;
-import org.javamoney.moneta.spi.MonetaryConfigProvider;
+import org.javamoney.moneta.convert.IdentityRateProvider;
+import org.javamoney.moneta.convert.imf.IMFHistoricRateProvider;
+import org.javamoney.moneta.convert.imf.IMFRateProvider;
+import org.javamoney.moneta.spi.*;
 import org.javamoney.moneta.spi.loader.LoaderService;
 
+import io.quarkiverse.moneta.QuarkusConfigProvider;
+import io.quarkiverse.moneta.convert.ECBCurrentRateProvider;
+import io.quarkiverse.moneta.convert.ECBHistoric90RateProvider;
+import io.quarkiverse.moneta.convert.ECBHistoricRateProvider;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
@@ -53,12 +61,15 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(RoundingProviderSpi.class));
         producer.produce(spiBuildItem(ServiceProvider.class));
         producer.produce(spiBuildItem(LoaderService.class));
-        producer.produce(spiBuildItem(MonetaryConfigProvider.class));
         producer.produce(spiBuildItem(MonetaryConversionsSingletonSpi.class));
-        producer.produce(spiBuildItem(ExchangeRateProvider.class));
         producer.produce(spiBuildItem(MonetaryFormatsSingletonSpi.class));
         producer.produce(spiBuildItem(MonetaryAmountProducer.class));
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
+
+        producer.produce(spiProviders(MonetaryConfigProvider.class, QuarkusConfigProvider.class));
+        producer.produce(spiProviders(ExchangeRateProvider.class, IdentityRateProvider.class, IMFRateProvider.class,
+                IMFHistoricRateProvider.class, ECBHistoric90RateProvider.class, ECBCurrentRateProvider.class,
+                ECBHistoricRateProvider.class));
     }
 
     @BuildStep
@@ -93,6 +104,16 @@ class MonetaProcessor {
         return new NativeImageResourceBuildItem(
                 "META-INF/services/javax.money.convert.ExchangeRateProvider",
                 "META-INF/services/org.javamoney.moneta.spi.MonetaryConfigProvider");
+    }
+
+    @SafeVarargs
+    private <P, I extends P> ServiceProviderBuildItem spiProviders(Class<P> provider, Class<? extends I>... implementations) {
+        var providerName = provider.getName();
+        var implementationNames = Arrays.stream(implementations)
+                .map(Class::getName)
+                .collect(Collectors.toUnmodifiableList());
+
+        return new ServiceProviderBuildItem(providerName, implementationNames);
     }
 
     private ServiceProviderBuildItem spiBuildItem(Class<?> clazz) {
