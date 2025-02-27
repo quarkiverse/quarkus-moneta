@@ -55,7 +55,7 @@ public class MonetaResource {
         money = rateProvider.getCurrencyConversion(query)
                 .apply(money);
 
-        return MonetaryFormats.getAmountFormat(Locale.GERMANY)
+        return MonetaryFormats.getAmountFormat(Locale.US)
                 .format(money);
     }
 }
