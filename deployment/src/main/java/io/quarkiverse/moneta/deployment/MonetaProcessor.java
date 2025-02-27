@@ -71,7 +71,7 @@ class MonetaProcessor {
 
     @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+                               BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
                 "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml",
                 resourceProducer, generatedResourceProducer);
@@ -88,12 +88,20 @@ class MonetaProcessor {
                 generatedResourceProducer);
     }
 
+    @BuildStep
+    NativeImageResourceBuildItem registerServices() {
+        return new NativeImageResourceBuildItem(
+                "META-INF/services/javax.money.convert.ExchangeRateProvider",
+                "META-INF/services/org.javamoney.moneta.spi.MonetaryConfigProvider"
+        );
+    }
+
     private ServiceProviderBuildItem spiBuildItem(Class<?> clazz) {
         return ServiceProviderBuildItem.allProvidersFromClassPath(clazz.getName());
     }
 
     private void registerResource(String resourcePath, String url, BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
+                                  BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
         try {
             logger.info("Downloading exchange rates from " + url);
             var data = downloadFile(url);
