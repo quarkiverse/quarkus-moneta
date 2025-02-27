@@ -1,0 +1,3 @@
+io.quarkiverse.moneta.convert.ECBCurrentRateProvider
+io.quarkiverse.moneta.convert.ECBHistoric90RateProvider
+io.quarkiverse.moneta.convert.ECBHistoricRateProvider
