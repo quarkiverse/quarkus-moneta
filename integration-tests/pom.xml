@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse.moneta</groupId>
     <artifactId>quarkus-moneta-parent</artifactId>
-    <version>3.3.0-SNAPSHOT</version>
+    <version>3.3.0</version>
   </parent>
   <artifactId>quarkus-moneta-integration-tests</artifactId>
   <name>Quarkus Moneta - Integration Tests</name>
