@@ -18,10 +18,19 @@
       <artifactId>quarkus-tls-registry</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.javamoney</groupId>
-      <artifactId>moneta</artifactId>
+      <groupId>org.javamoney.moneta</groupId>
+      <artifactId>moneta-core</artifactId>
       <version>1.4.4</version>
-      <type>pom</type>
+    </dependency>
+    <dependency>
+      <groupId>org.javamoney.moneta</groupId>
+      <artifactId>moneta-convert</artifactId>
+      <version>1.4.4</version>
+    </dependency>
+    <dependency>
+      <groupId>org.javamoney.moneta</groupId>
+      <artifactId>moneta-convert-imf</artifactId>
+      <version>1.4.4</version>
     </dependency>
     <dependency>
       <groupId>javax.money</groupId>
