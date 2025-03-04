@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -27,12 +28,15 @@ import org.javamoney.moneta.convert.imf.IMFRateProvider;
 import org.javamoney.moneta.spi.*;
 import org.javamoney.moneta.spi.loader.LoaderService;
 
+import io.quarkiverse.moneta.BuildTimeConfigRecorder;
 import io.quarkiverse.moneta.QuarkusConfigProvider;
 import io.quarkiverse.moneta.convert.ECBCurrentRateProvider;
 import io.quarkiverse.moneta.convert.ECBHistoric90RateProvider;
 import io.quarkiverse.moneta.convert.ECBHistoricRateProvider;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
+import io.quarkus.deployment.annotations.ExecutionTime;
+import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedResourceBuildItem;
@@ -56,7 +60,7 @@ class MonetaProcessor {
     }
 
     @BuildStep
-    void spiRegistration(BuildProducer<ServiceProviderBuildItem> producer) {
+    void spiRegistration(BuildProducer<ServiceProviderBuildItem> producer, MonetaBuildTimeConfig config) {
         producer.produce(spiBuildItem(MonetaryAmountsSingletonSpi.class));
         producer.produce(spiBuildItem(CurrencyProviderSpi.class));
         producer.produce(spiBuildItem(MonetaryAmountFactoryProviderSpi.class));
@@ -73,43 +77,96 @@ class MonetaProcessor {
         producer.produce(spiBuildItem(MonetaryRoundingsSingletonSpi.class));
 
         producer.produce(spiProviders(MonetaryConfigProvider.class, QuarkusConfigProvider.class));
-        producer.produce(spiProviders(ExchangeRateProvider.class, IdentityRateProvider.class, IMFRateProvider.class,
-                IMFHistoricRateProvider.class, ECBHistoric90RateProvider.class, ECBCurrentRateProvider.class,
-                ECBHistoricRateProvider.class));
+
+        if (config.conversionEnabled()) {
+            producer.produce(spiProviders(ExchangeRateProvider.class, IdentityRateProvider.class, IMFRateProvider.class,
+                    IMFHistoricRateProvider.class, ECBHistoric90RateProvider.class, ECBCurrentRateProvider.class,
+                    ECBHistoricRateProvider.class));
+        } else {
+            producer.produce(spiProviders(ExchangeRateProvider.class, IdentityRateProvider.class));
+        }
     }
 
     @BuildStep
-    void indexDependencies(BuildProducer<IndexDependencyBuildItem> producer) {
+    void indexDependencies(BuildProducer<IndexDependencyBuildItem> producer, MonetaBuildTimeConfig config) {
         producer.produce(new IndexDependencyBuildItem("javax.money", "money-api"));
         producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-core"));
         producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-convert"));
-        producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-imf"));
+
+        if (config.conversionEnabled()) {
+            producer.produce(new IndexDependencyBuildItem("org.javamoney", "moneta-imf"));
+        }
     }
 
     @BuildStep
     void exchangeRateResources(BuildProducer<NativeImageResourceBuildItem> resourceProducer,
-            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer) {
-        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
-                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml",
-                resourceProducer, generatedResourceProducer);
-        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
-                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml",
-                resourceProducer,
-                generatedResourceProducer);
-        registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
-                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml",
-                resourceProducer, generatedResourceProducer);
-        registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
-                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv",
-                resourceProducer,
-                generatedResourceProducer);
+            BuildProducer<GeneratedResourceBuildItem> generatedResourceProducer,
+            MonetaBuildTimeConfig config) {
+
+        if (config.conversionEnabled()) {
+            logger.info("Downloading exchange rate resources.");
+            registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-daily.xml",
+                    "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-daily.xml",
+                    resourceProducer, generatedResourceProducer);
+            registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist-90d.xml",
+                    "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic-90d.xml",
+                    resourceProducer,
+                    generatedResourceProducer);
+            registerResource("org/javamoney/moneta/convert/ecb/defaults/eurofxref-hist.xml",
+                    "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/ecb-historic.xml",
+                    resourceProducer, generatedResourceProducer);
+            registerResource("org/javamoney/moneta/convert/imf/defaults/rms_five.tsv",
+                    "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv",
+                    resourceProducer,
+                    generatedResourceProducer);
+        } else {
+            logger.info("Skipping exchange rate resource download because conversion is disabled.");
+        }
     }
 
     @BuildStep
-    NativeImageResourceBuildItem registerServices() {
-        return new NativeImageResourceBuildItem(
-                "META-INF/services/javax.money.convert.ExchangeRateProvider",
-                "META-INF/services/org.javamoney.moneta.spi.MonetaryConfigProvider");
+    NativeImageResourceBuildItem registerServices(MonetaBuildTimeConfig config) {
+        List<String> files;
+
+        if (config.conversionEnabled()) {
+            files = List.of("META-INF/services/javax.money.convert.ExchangeRateProvider",
+                    "META-INF/services/org.javamoney.moneta.spi.MonetaryConfigProvider");
+        } else {
+            files = List.of("META-INF/services/org.javamoney.moneta.spi.MonetaryConfigProvider");
+        }
+
+        return new NativeImageResourceBuildItem(files);
+    }
+
+    @BuildStep
+    @Record(ExecutionTime.STATIC_INIT)
+    void configStaticInit(BuildTimeConfigRecorder recorder, MonetaBuildTimeConfig config) {
+        recorder.set("conversion.default-chain", config.conversionDefaultChain());
+        recorder.set("org.javamoney.moneta.Money.defaults.precision", "256");
+        recorder.set("org.javamoney.moneta.Money.defaults.roundingMode", "HALF_EVEN");
+
+        recorder.set("ecb.digit.fraction", "6");
+        recorder.set("imf.digit.fraction", "6");
+
+        if (config.conversionEnabled()) {
+            recorder.set("load.IMFRateProvider.type", "SCHEDULED");
+            recorder.set("load.IMFRateProvider.period", "06:00");
+
+            recorder.set("load.IMFHistoricRateProvider.type", "LAZY");
+        } else {
+            recorder.set("load.IMFRateProvider.type", "NEVER");
+            recorder.set("load.IMFHistoricRateProvider.type", "NEVER");
+        }
+
+        recorder.set("load.IMFRateProvider.resource", "org/javamoney/moneta/convert/imf/defaults/rms_five.tsv");
+        recorder.set("load.IMFRateProvider.urls",
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv");
+
+        recorder.set("load.IMFHistoricRateProvider.resource", "org/javamoney/moneta/convert/imf/defaults/rms_five.tsv");
+        recorder.set("load.IMFHistoricRateProvider.urls",
+                "https://raw.githubusercontent.com/instant-solutions/quarkus-moneta-data/refs/heads/main/imf.tsv");
+        recorder.set("load.IMFHistoricRateProvider.startRemote", "false");
+        recorder.set("load.IMFHistoricRateProvider.useragent", "Chrome/51.0.2704.103");
     }
 
     @SafeVarargs
