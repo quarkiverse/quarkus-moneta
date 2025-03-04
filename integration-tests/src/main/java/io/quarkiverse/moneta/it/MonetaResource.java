@@ -55,6 +55,15 @@ public class MonetaResource {
         money = rateProvider.getCurrencyConversion(query)
                 .apply(money);
 
+        query = ConversionQueryBuilder.of()
+                .setBaseCurrency(money.getCurrency())
+                .setTermCurrency(Monetary.getCurrency("EUR"))
+                .setRateTypes(RateType.DEFERRED)
+                .build();
+
+        money = rateProvider.getCurrencyConversion(query)
+                .apply(money);
+
         return MonetaryFormats.getAmountFormat(Locale.US)
                 .format(money);
     }
