@@ -24,6 +24,15 @@
         "code",
         "maintenance"
       ]
+    },
+    {
+      "login": "gastaldi",
+      "name": "George Gastaldi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/54133?v=4",
+      "profile": "https://github.com/gastaldi",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
