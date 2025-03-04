@@ -33,6 +33,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "holly-cummins",
+      "name": "Holly Cummins",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11509290?v=4",
+      "profile": "https://hollycummins.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "melloware",
+      "name": "Melloware",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4399574?v=4",
+      "profile": "https://melloware.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "gsmet",
+      "name": "Guillaume Smet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1279749?v=4",
+      "profile": "https://lesincroyableslivres.fr/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
