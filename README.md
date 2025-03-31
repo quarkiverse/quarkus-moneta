@@ -43,7 +43,8 @@ Quarkus Moneta provides multiple different version streams.
 |--------------|----------------|
 | 3.8.x (LTS)  | 1.x            |
 | 3.15.x (LTS) | 2.x            |
-| 3.19.x       | 3.x            |
+| 3.20.x (LTS) | 3.x            |
+| 3.21.x       | 4.x            |
 
 ## Contributors ✨
 
