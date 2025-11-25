@@ -1,5 +1,5 @@
 release:
-  current-version: "2.1.2"
+  current-version: "2.1.3"
   next-version: "2.2.0-SNAPSHOT"
   pre-release: false
   latest: false
